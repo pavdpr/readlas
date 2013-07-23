@@ -73,25 +73,25 @@ else
         case 0
             data.point( n ) = ...
                 readLasPoint0( fid );
-            for i = 2:data.header.numberOfPointRecords
+            for i = 2:n
                 data.point( i - 1 ) = readLasPoint0( fid );
             end
         case 1
-            data.point( data.header.numberOfPointRecords ) = ...
+            data.point( n ) = ...
                 readLasPoint1( fid );
-            for i = 2:data.header.numberOfPointRecords
+            for i = 2:n
                 data.point( i - 1 ) = readLasPoint1( fid );
             end
         case 2 
-            data.point( data.header.numberOfPointRecords ) = ...
+            data.point( n ) = ...
                 readLasPoint2( fid );
-            for i = 2:data.header.numberOfPointRecords
+            for i = 2:n
                 data.point( i - 1 ) = readLasPoint2( fid );
             end
         case 3
-            data.point( data.header.numberOfPointRecords ) = ...
+            data.point( n ) = ...
                 readLasPoint3( fid );
-            for i = 2:data.header.numberOfPointRecords
+            for i = 2:n
                 data.point( i - 1 ) = readLasPoint3( fid );
             end
         otherwise
