@@ -1,6 +1,13 @@
-function data = readLas( filename )
+function data = readLas( filename, firstPoint, numberOfPoints )
 %READLAS Summary of this function goes here
 %   Detailed explanation goes here
+
+if nargin < 2 
+    firstPoint = 0;
+end
+if nargin < 3 
+    numberOfPoints = inf;
+end
 
 fid = fopen( filename, 'r' );
 if fid < 0
@@ -22,9 +29,35 @@ else
     end
 end
 
+% figure out how many points will be read
+n = min( [ numberOfPoints, data.header.numberOfPointRecords ] );
 
 % move to the beginning of the point data
-fseek( fid, data.header.offsetToPointData, 'bof' );
+switch data.header.pointDataFormatID
+    % advance to the beginnig of the point Data
+    case 0
+        headerSize = 20;
+    case 1
+        headerSize = 28;
+    case 2 
+        headerSize = 26;
+    case 3
+        headerSize = 34;
+    otherwise
+        error( 'readLas:invalidPointType', ...
+            [ 'The point data format id "' ...
+            num2str( data.header.pointDataFormatID ) ...
+            '" is not currently supported' ] );
+
+end
+
+if firstPoint > data.header.numberOfPointRecords
+    error( 'readLas:invalidFirstPoint', ...
+        'The first point is too big' );
+end
+
+fseek( fid, data.header.offsetToPointData + headerSize * firstPoint, ...
+    'bof' );
 
 
 % initialize the list of points
@@ -38,7 +71,7 @@ else
         % the first point is put in the last element of the array to
         %   preallocate the array to the right size for efficency
         case 0
-            data.point( data.header.numberOfPointRecords ) = ...
+            data.point( n ) = ...
                 readLasPoint0( fid );
             for i = 2:data.header.numberOfPointRecords
                 data.point( i - 1 ) = readLasPoint0( fid );
