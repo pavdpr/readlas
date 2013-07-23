@@ -22,6 +22,11 @@ else
     end
 end
 
+
+% move to the beginning of the point data
+fseek( fid, data.header.offsetToPointData, 'bof' );
+
+
 % initialize the list of points
 if data.header.numberOfPointRecords == 0
     data.point = [];
@@ -36,25 +41,25 @@ else
             data.point( data.header.numberOfPointRecords ) = ...
                 readLasPoint0( fid );
             for i = 2:data.header.numberOfPointRecords
-                data.point( i ) = readLasPoint0( fid );
+                data.point( i - 1 ) = readLasPoint0( fid );
             end
         case 1
             data.point( data.header.numberOfPointRecords ) = ...
                 readLasPoint1( fid );
             for i = 2:data.header.numberOfPointRecords
-                data.point( i ) = readLasPoint1( fid );
+                data.point( i - 1 ) = readLasPoint1( fid );
             end
         case 2 
             data.point( data.header.numberOfPointRecords ) = ...
                 readLasPoint2( fid );
             for i = 2:data.header.numberOfPointRecords
-                data.point( i ) = readLasPoint2( fid );
+                data.point( i - 1 ) = readLasPoint2( fid );
             end
         case 3
             data.point( data.header.numberOfPointRecords ) = ...
                 readLasPoint3( fid );
             for i = 2:data.header.numberOfPointRecords
-                data.point( i ) = readLasPoint3( fid );
+                data.point( i - 1 ) = readLasPoint3( fid );
             end
         otherwise
             error( 'readLas:invalidPointType', ...
