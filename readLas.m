@@ -1,6 +1,55 @@
 function data = readLas( filename, firstPoint, numberOfPoints )
-%READLAS Summary of this function goes here
-%   Detailed explanation goes here
+%READLAS Reads a las file 
+%
+% DETAILED DESCRIPTION:
+%   This function reads an ASPRS las file of version 1.2 or less
+%
+% INPUTS:
+%   filename: the name of the las file
+%   firstPoint: (Optional) the index (starting at 0) of the first las point
+%       to read
+%   numberOfPoints: (Optional) The maximum number of points to read
+%
+% OUTPUS:
+%   data: a structure containg the las file
+%   data.header: a structure containing the las public header
+%   data.vlr: an array of structures containing variable length records
+%   data.vlr(i): the ith variable length record
+%   data.vlr(i).header: the header of the ith vlr
+%   data.vlr(i).data: the variable length record data. Note that this will
+%       most likely be a char array that will need data extracted from it
+%   data.point: an array of point structures
+%   data.point(i): the ith point
+%
+% REQUIRED FUNCTIONS:
+%   readLasPublicHeader.m: reads the las public header
+%   readLasVariableLengthData.m: reads a variable length record
+%   readLasVariableLengthHeader.m: reads a variable length record header
+%   readLasPoint0.m: reads a type 0 point
+%   readLasPoint1.m: reads a type 1 point
+%   readLasPoint2.m: reads a type 2 point
+%   readLasPoint3.m: reads a type 3 point
+%
+% HISTORY:
+%   2013-07-23: Created by Paul Romanczyk (par4249 at rit dot edu)
+%   2013-10-03: Modified by Paul Romanczyk
+%       -Fixed a bug where a vlr was not properly initialized.
+%       -Moved the helper functions inside the main files
+%       -Added warning for las versions greater than 1.2
+%       -Added RIT Copyright
+%
+% REFERENCES:
+%   http://asprs.org/Committee-General/LASer-LAS-File-Format-Exchange-Activities.html
+%   http://asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf
+%   http://asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf
+%   http://asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf
+%
+% WARNINGS:
+%   This may not correctly read a las file of version 1.3 or later
+%
+% COPYRIGHT:
+%   (C) 2013 Rochester Institute of Technology
+%
 
 if nargin < 2 
     firstPoint = 0;
@@ -18,11 +67,31 @@ end
 % read the public header
 data.header = readLasPublicHeader( fid );
 
+if data.header.versionMajor > 1
+    warning( 'readLas:v13', ...
+            'This las file is greater than 1.2 and may not be read correctly' );
+else
+    if data.header.versionMinor > 2
+        % > 1.2
+        warning( 'readLas:v13', ...
+            'This las file is greater than 1.2 and may not be read correctly' );
+    end
+end
+
 % initialize the list of variable length records
 if data.header.numberOfVariableLengthRecords == 0
     data.vlr = [];
 else
-    data.vlr( data.header.numberOfVariableLengthRecords ) = [];
+    % create a temporary vlr to put into an array
+    tmpvlr.header.reserved = 0;
+    tmpvlr.header.userID = '';
+    tmpvlr.header.recordID = 0;
+    tmpvlr.header.recordLengthAfterHeader = 0;
+    tmpvlr.header.description = '                                ';
+    tmpvlr.data = '';
+    
+    data.vlr( data.header.numberOfVariableLengthRecords ) = tmpvlr;
+    
     % read the varible length records
     for i = 1:data.header.numberOfVariableLengthRecords
         data.vlr( i ) = readLasVariableLengthData( fid );
@@ -108,3 +177,116 @@ end
 fclose( fid );
 end
 
+% Read a type 0 las point
+function point = readLasPoint0( fid )
+    point.x = fread( fid, 1, 'int32' );
+    point.y = fread( fid, 1, 'int32' );
+    point.z = fread( fid, 1, 'int32' );
+    point.intensity = fread( fid, 1, 'ushort' );
+    point.returnInfo = fread( fid, 1 );
+    point.classification = fread( fid, 1, 'uchar' );
+    point.scanAngleRank = fread( fid, 1, 'uchar' );
+    point.userData = fread( fid, 1, 'uchar' );
+    point.sourceId = fread( fid, 1, 'ushort' );
+end
+
+% Read a type 1 las point
+function point = readLasPoint1( fid )
+    point.x = fread( fid, 1, 'int32' );
+    point.y = fread( fid, 1, 'int32' );
+    point.z = fread( fid, 1, 'int32' );
+    point.intensity = fread( fid, 1, 'ushort' );
+    point.returnInfo = fread( fid, 1 );
+    point.classification = fread( fid, 1, 'uchar' );
+    point.scanAngleRank = fread( fid, 1, 'uchar' );
+    point.userData = fread( fid, 1, 'uchar' );
+    point.sourceId = fread( fid, 1, 'ushort' );
+    point.gpsTime = fread( fid, 1, 'double' );
+end
+
+% Read a type 2 las point
+function point = readLasPoint2( fid )
+    point.x = fread( fid, 1, 'int32' );
+    point.y = fread( fid, 1, 'int32' );
+    point.z = fread( fid, 1, 'int32' );
+    point.intensity = fread( fid, 1, 'ushort' );
+    point.returnInfo = fread( fid, 1 );
+    point.classification = fread( fid, 1, 'uchar' );
+    point.scanAngleRank = fread( fid, 1, 'uchar' );
+    point.userData = fread( fid, 1, 'uchar' );
+    point.sourceId = fread( fid, 1, 'ushort' );
+    point.red = fread( fid, 1, 'ushort' );
+    point.green = fread( fid, 1, 'ushort' );
+    point.blue = fread( fid, 1, 'ushort' );
+end
+
+% Read a type 3 las point
+function point = readLasPoint3( fid )
+    point.x = fread( fid, 1, 'int32' );
+    point.y = fread( fid, 1, 'int32' );
+    point.z = fread( fid, 1, 'int32' );
+    point.intensity = fread( fid, 1, 'ushort' );
+    point.returnInfo = fread( fid, 1 );
+    point.classification = fread( fid, 1, 'uchar' );
+    point.scanAngleRank = fread( fid, 1, 'uchar' );
+    point.userData = fread( fid, 1, 'uchar' );
+    point.sourceId = fread( fid, 1, 'ushort' );
+    point.gpsTime = fread( fid, 1, 'double' );
+    point.red = fread( fid, 1, 'ushort' );
+    point.green = fread( fid, 1, 'ushort' );
+    point.blue = fread( fid, 1, 'ushort' );
+end
+
+% Read a las public header
+function header = readLasPublicHeader( fid )
+    header.fileSignature = char( fread( fid, 4 )' );
+    header.fileSourceID = fread( fid, 1, 'ushort' );
+    header.globalEncoding = fread( fid, 1, 'ushort' );
+    header.projectID1 = fread( fid, 1, 'uint32' );
+    header.projectID2 = fread( fid, 1, 'ushort' );
+    header.projectID3 = fread( fid, 1, 'ushort' );
+    header.projectID4 = char( fread( fid, 8 )' );
+    header.versionMajor = fread( fid, 1 );
+    header.versionMinor = fread( fid, 1 );
+    header.systemIdentifier = char( fread( fid, 32 )' );
+    header.generatingSoftware = char( fread( fid, 32 )' );
+    header.fileCreationDayOfYear = fread( fid, 1, 'ushort' );
+    header.fileCreationYear = fread( fid, 1, 'ushort' );
+    header.headerSize = fread( fid, 1, 'ushort' );
+    header.offsetToPointData = fread( fid, 1, 'uint32' );
+    header.numberOfVariableLengthRecords = fread( fid, 1, 'uint32' );
+    header.pointDataFormatID = fread( fid, 1, 'uchar' );
+    header.pointDataRecordLength = fread( fid, 1, 'ushort' );
+    header.numberOfPointRecords = fread( fid, 1, 'uint32' );
+    header.numberOfPointsByReturn = fread( fid, 5, 'uint32' )';
+    header.xScaleFactor = fread( fid, 1, 'double' );
+    header.yScaleFactor = fread( fid, 1, 'double' );
+    header.zScaleFactor = fread( fid, 1, 'double' );
+    header.xOffset = fread( fid, 1, 'double' );
+    header.yOffset = fread( fid, 1, 'double' );
+    header.zOffset = fread( fid, 1, 'double' );
+    header.maxX = fread( fid, 1, 'double' );
+    header.minX = fread( fid, 1, 'double' );
+    header.maxY = fread( fid, 1, 'double' );
+    header.minY = fread( fid, 1, 'double' );
+    header.maxZ = fread( fid, 1, 'double' );
+    header.minZ = fread( fid, 1, 'double' );
+end
+
+% Read a vlr
+function vlData = readLasVariableLengthData( fid )
+    % read the header
+    vlData.header = readLasVariableLengthHeader( fid );
+
+    % read the data
+    vlData.data = fread( fid, vlData.header.recordLengthAfterHeader );
+end
+
+% Read a vlr header
+function vlHeader = readLasVariableLengthHeader( fid )
+    vlHeader.reserved = fread( fid, 1, 'ushort' );
+    vlHeader.userID = char( fread( fid, 16 )' );
+    vlHeader.recordID = fread( fid, 1, 'ushort' );
+    vlHeader.recordLengthAfterHeader = fread( fid, 1, 'ushort' );
+    vlHeader.description = char( fread( fid, 32 )' );
+end
