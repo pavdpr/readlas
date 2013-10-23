@@ -10,8 +10,8 @@ function data = readLas( filename, firstPoint, numberOfPoints )
 %       to read
 %   numberOfPoints: (Optional) The maximum number of points to read
 %
-% OUTPUS:
-%   data: a structure containg the las file
+% OUTPUTS:
+%   data: a structure containing the las file
 %   data.header: a structure containing the las public header
 %   data.vlr: an array of structures containing variable length records
 %   data.vlr(i): the ith variable length record
@@ -21,15 +21,6 @@ function data = readLas( filename, firstPoint, numberOfPoints )
 %   data.point: an array of point structures
 %   data.point(i): the ith point
 %
-% REQUIRED FUNCTIONS:
-%   readLasPublicHeader.m: reads the las public header
-%   readLasVariableLengthData.m: reads a variable length record
-%   readLasVariableLengthHeader.m: reads a variable length record header
-%   readLasPoint0.m: reads a type 0 point
-%   readLasPoint1.m: reads a type 1 point
-%   readLasPoint2.m: reads a type 2 point
-%   readLasPoint3.m: reads a type 3 point
-%
 % HISTORY:
 %   2013-07-23: Created by Paul Romanczyk (par4249 at rit dot edu)
 %   2013-10-03: Modified by Paul Romanczyk
@@ -37,6 +28,8 @@ function data = readLas( filename, firstPoint, numberOfPoints )
 %       -Moved the helper functions inside the main files
 %       -Added warning for las versions greater than 1.2
 %       -Added RIT Copyright
+%   2013-10-23: Modified by Paul Romanczyk
+%       -Fixed some documentation issues
 %
 % REFERENCES:
 %   http://asprs.org/Committee-General/LASer-LAS-File-Format-Exchange-Activities.html
@@ -92,7 +85,7 @@ else
     
     data.vlr( data.header.numberOfVariableLengthRecords ) = tmpvlr;
     
-    % read the varible length records
+    % read the variable length records
     for i = 1:data.header.numberOfVariableLengthRecords
         data.vlr( i ) = readLasVariableLengthData( fid );
     end
@@ -103,7 +96,7 @@ n = min( [ numberOfPoints, data.header.numberOfPointRecords ] );
 
 % move to the beginning of the point data
 switch data.header.pointDataFormatID
-    % advance to the beginnig of the point Data
+    % advance to the beginning of the point Data
     case 0
         headerSize = 20;
     case 1
@@ -138,7 +131,7 @@ else
         % the switch is outside the for loops to have fewer switch
         %   statements being used
         % the first point is put in the last element of the array to
-        %   preallocate the array to the right size for efficency
+        %   preallocate the array to the right size for efficiency
         case 0
             data.point( n ) = ...
                 readLasPoint0( fid );
@@ -273,7 +266,7 @@ function header = readLasPublicHeader( fid )
     header.minZ = fread( fid, 1, 'double' );
 end
 
-% Read a vlr
+% Read a variable length record
 function vlData = readLasVariableLengthData( fid )
     % read the header
     vlData.header = readLasVariableLengthHeader( fid );
@@ -282,7 +275,7 @@ function vlData = readLasVariableLengthData( fid )
     vlData.data = fread( fid, vlData.header.recordLengthAfterHeader );
 end
 
-% Read a vlr header
+% Read a variable length record header
 function vlHeader = readLasVariableLengthHeader( fid )
     vlHeader.reserved = fread( fid, 1, 'ushort' );
     vlHeader.userID = char( fread( fid, 16 )' );
