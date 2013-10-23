@@ -79,6 +79,10 @@ function [ class, synthetic, keypoint, withheld ] = lasClassification( in )
 %   (C) 2013 Rochester Institute of Technology
 %
 
+% make sure we are a uint8 (1 byte)!
+in = uint8( in );
+
+% parse the data into its components
 class = bitand( in, 31 );
 synthetic = bitshift( bitand( in, 32 ), -5 );
 keypoint = bitshift( bitand( in, 64 ), -6 );
